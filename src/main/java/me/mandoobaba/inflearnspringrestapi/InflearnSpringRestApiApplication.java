@@ -1,8 +1,10 @@
 package me.mandoobaba.inflearnspringrestapi;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 public class InflearnSpringRestApiApplication {
@@ -11,4 +13,8 @@ public class InflearnSpringRestApiApplication {
         SpringApplication.run(InflearnSpringRestApiApplication.class, args);
     }
 
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }
