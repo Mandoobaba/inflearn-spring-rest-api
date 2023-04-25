@@ -46,6 +46,7 @@ public class EventControllerTests {
                 .location("강남역 D2 스타트업 팩토리")
                 .free(true)
                 .offline(false)
+                .eventStatus(EventStatus.PUBLISHED)
                 .build();
 
         mockMvc.perform(post("/api/events/")
@@ -62,4 +63,36 @@ public class EventControllerTests {
                 .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()));
     }
 
+    @Test
+    public void createEvent_bad_request() throws Exception {
+        Event event = Event.builder()
+                .id(100)
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEventDateTime(LocalDateTime.of(2023, 4, 20, 1, 54, 00))
+                .closeEnrollmentDateTime(LocalDateTime.of(2023, 4, 21, 1, 54, 00))
+                .beginEventDateTime(LocalDateTime.of(2023, 4, 22, 1, 54, 00))
+                .endEventDateTime(LocalDateTime.of(2023, 4, 23, 1, 54, 00))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타트업 팩토리")
+                .free(true)
+                .offline(false)
+                .eventStatus(EventStatus.PUBLISHED)
+                .build();
+
+        mockMvc.perform(post("/api/events/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaTypes.HAL_JSON)
+                        .content(objectMapper.writeValueAsString(event)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("id").exists())
+                .andExpect(header().exists(HttpHeaders.LOCATION))
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
+                .andExpect(jsonPath("id").value(Matchers.not(100)))
+                .andExpect(jsonPath("free").value(Matchers.not(true)))
+                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()));
+    }
 }
