@@ -26,11 +26,21 @@ public class EventController {
     @Autowired
     EventRepository eventRepository;
 
+    @Autowired
+    EventValidator eventValidator;
+
     @PostMapping
     public ResponseEntity createEvent(@RequestBody @Valid EventDto eventDto, Errors errors) {
         if (errors.hasErrors()){
             return ResponseEntity.badRequest().build();
         }
+
+        // 사용자 정의 validator 사용
+        eventValidator.validate(eventDto, errors);
+        if (errors.hasErrors()){
+            return ResponseEntity.badRequest().build();
+        }
+
         Event event = modelMapper.map(eventDto, Event.class);
         Event newEvent = this.eventRepository.save(event);
         URI createdUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
