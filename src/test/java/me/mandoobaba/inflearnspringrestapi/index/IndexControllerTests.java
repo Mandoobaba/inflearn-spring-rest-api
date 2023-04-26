@@ -1,5 +1,6 @@
 package me.mandoobaba.inflearnspringrestapi.index;
 
+import me.mandoobaba.inflearnspringrestapi.common.BaseControllerTest;
 import me.mandoobaba.inflearnspringrestapi.common.RestDocsConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,15 +18,7 @@ import static org.springframework.mock.http.server.reactive.MockServerHttpReques
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
-@AutoConfigureRestDocs
-@Import(RestDocsConfiguration.class)
-public class IndexControllerTests {
-
-    @Autowired
-    MockMvc mockMvc;
+public class IndexControllerTests extends BaseControllerTest {
 
     @Test
     public void index() throws Exception {
