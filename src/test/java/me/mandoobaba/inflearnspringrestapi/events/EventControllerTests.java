@@ -1,22 +1,13 @@
 package me.mandoobaba.inflearnspringrestapi.events;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import me.mandoobaba.inflearnspringrestapi.common.BaseControllerTest;
-import me.mandoobaba.inflearnspringrestapi.common.RestDocsConfiguration;
 import me.mandoobaba.inflearnspringrestapi.common.TestDescription;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
@@ -35,6 +26,11 @@ public class EventControllerTests extends BaseControllerTest {
 
     @Autowired
     EventRepository eventRepository;
+
+    @BeforeEach
+    private void clear() {
+        eventRepository.deleteAll();
+    }
 
     @Test
     @TestDescription("정상적으로 이벤트를 생성하는 테스트")
@@ -199,6 +195,69 @@ public class EventControllerTests extends BaseControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("page").exists())
+                .andExpect(jsonPath("_embedded.eventList[0]._links.self").exists())
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.profile").exists())
+                .andDo(document("query-events"));
+    }
+
+    @Test
+    @TestDescription("basePrice가 100 이상 200 이하인 이벤트 목록을 조회")
+    public void queryEvents_basePriceCheck() throws Exception {
+        // Given
+        IntStream.range(0, 200).forEach(i -> {
+            Event event = Event.builder()
+                    .name("Event " + i)
+                    .description("Test event")
+                    .basePrice(50 + i)
+                    .build();
+
+            this.eventRepository.save(event);
+        });
+
+        // When & Then
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/events")
+                        .param("page", "1")
+                        .param("size", "10")
+                        .param("sort", "name,DESC")
+                        .param("minBasePrice", "100")
+                        .param("maxBasePrice", "200")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("page").exists())
+                .andExpect(jsonPath("page.totalElements").value("101"))
+                .andExpect(jsonPath("_embedded.eventList[0]._links.self").exists())
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.profile").exists())
+                .andDo(document("query-events"));
+    }
+
+    @Test
+    @TestDescription("현재 enrollment 중인 이벤트 목록을 조회")
+    public void queryEvents_enrollmentCheck() throws Exception {
+        // Given
+        IntStream.range(0, 100).forEach(i -> {
+            Event event = Event.builder()
+                    .name("Event " + i)
+                    .description("Test event")
+                    .eventStatus(EventStatus.getEventStatus(i % 3))
+                    .build();
+
+            this.eventRepository.save(event);
+        });
+
+        // When & Then
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/events")
+                        .param("page", "1")
+                        .param("size", "10")
+                        .param("sort", "name,DESC")
+                        .param("isEnroll", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("page").exists())
+                .andExpect(jsonPath("page.totalElements").value("33"))
                 .andExpect(jsonPath("_embedded.eventList[0]._links.self").exists())
                 .andExpect(jsonPath("_links.self").exists())
                 .andExpect(jsonPath("_links.profile").exists())
